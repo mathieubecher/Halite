@@ -1,14 +1,15 @@
 #pragma once
-
 #include "entity.hpp"
 #include "constants.hpp"
 #include "command.hpp"
 
 #include <memory>
+#include <random>
 
 namespace hlt {
     struct Ship : Entity {
-        Halite halite;
+        Halite halite; 
+
 
         Ship(PlayerId player_id, EntityId ship_id, int x, int y, Halite halite) :
             Entity(player_id, ship_id, x, y),
@@ -31,6 +32,8 @@ namespace hlt {
             return hlt::command::move(id, Direction::STILL);
         }
 
+		
+		
         static std::shared_ptr<Ship> _generate(PlayerId player_id);
     };
 }

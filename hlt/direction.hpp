@@ -39,4 +39,5 @@ namespace hlt {
     static std::ostream& operator<<(std::ostream& out, const Direction& direction) {
         return out << static_cast<char>(direction);
     }
+
 }
