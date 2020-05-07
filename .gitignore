@@ -1,0 +1,9 @@
+MyBot
+Makefile
+*.hlt
+*.log
+*~
+*.nix
+*.log
+make.bat
+run_game.bat
