@@ -1,4 +1,4 @@
-using namespace std;
+﻿using namespace std;
 using namespace hlt;
 
 namespace shipBTree{
@@ -18,13 +18,84 @@ namespace shipBTree{
 			return false;
 		}
 
+		vector<MapCell*> cellsInRange(Position p, int range, unique_ptr<GameMap>& game_map) {
+			vector<MapCell*> retCellsInRange = vector<MapCell*>();
+			for (int x = -range; x <= range; ++x) {
+				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
+					if (x == 0 || y == 0) break;
+					Position ret;
+					ret.x = p.x + x;
+					ret.y = p.y + y;
+					retCellsInRange.push_back(game_map->at(ret));
+				}
+			}
+			return retCellsInRange;
+		}
+
+		vector<shared_ptr<Ship>> shipsInRange(Position p, int range, unique_ptr<GameMap>& game_map) {
+			vector<shared_ptr<Ship>> retShipsInRange = vector<shared_ptr<Ship>>();
+
+			for (int x = -range; x <= range; ++x) {
+				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
+					if (x == 0 || y == 0) break;
+					Position ret;
+					ret.x = p.x + x;
+					ret.y = p.y + y;
+					if (game_map->at(ret)->is_occupied())
+						retShipsInRange.push_back(game_map->at(ret)->ship);
+				}
+			}
+
+			return retShipsInRange;
+		}
+
+		vector<shared_ptr<Ship>> enemyShipsInRange(Position p, int range, PlayerId id, unique_ptr<GameMap>& game_map) {
+			vector<shared_ptr<Ship>> retShipsInRange = vector<shared_ptr<Ship>>();
+
+			for (int x = -range; x <= range; ++x) {
+				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
+					if (x == 0 || y == 0) break;
+					Position ret;
+					ret.x = p.x + x;
+					ret.y = p.y + y;
+					if (game_map->at(ret)->is_occupied()) {
+						shared_ptr<Ship> neighbour = game_map->at(ret)->ship;
+						if(ship->id != id)
+							retShipsInRange.push_back(game_map->at(ret)->ship);
+					}
+				}
+			}
+
+			return retShipsInRange;
+		}
+
+
 		void clearNextPos() {
 			nextPos = vector<Position>();
 		}
 
 		Command update(shared_ptr<Ship> _ship) {
 			ship = _ship;
-			return ship->stay_still();
+
+			unique_ptr<GameMap>& game_map = game->game_map;
+
+			vector<shared_ptr<Ship>> enemyInRange = vector<shared_ptr<Ship>>();
+			enemyInRange = enemyShipsInRange(ship->position, 5, ship->owner, game_map);
+
+			if (enemyInRange.size() != 0) {
+				log::log("find foes");
+				return _recolt();
+			}
+			else if (ship->halite > 800) {
+				return _return_dropoff();
+			}
+			else if (game_map->at(ship)->halite < constants::MAX_HALITE / 10) {
+
+				return _search_halite();
+
+			}
+
+			return _recolt();
 		}
 
 
