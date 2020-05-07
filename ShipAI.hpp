@@ -94,24 +94,30 @@ namespace shipBTree{
 			return _recolt();
 		}
 
-
-		Command _return_dropoff() {
-			Position * nearDropOff = &game->players[ship->owner]->shipyard->position;
+		Position NearDropOff() {
+			Position nearDropOff = game->players[ship->owner]->shipyard->position;
 			shared_ptr<Player> player = game->players[ship->owner];
 
 			for (int i = 0; i < player->dropoffs.size(); ++i) {
-				if (game_map->calculate_distance(player->dropoffs[i]->position, ship->position) < game_map->calculate_distance(*nearDropOff, ship->position)) {
-					nearDropOff = &player->dropoffs[i]->position;
+				if (game_map->calculate_distance(player->dropoffs[i]->position, ship->position) < game_map->calculate_distance(nearDropOff, ship->position)) {
+					nearDropOff = player->dropoffs[i]->position;
 				}
 			}
+			return nearDropOff;
+		}
+
+		Command _return_dropoff() {
+			Position nearDropOff = NearDropOff();
+			shared_ptr<Player> player = game->players[ship->owner];
+			
 			/*
-			if (player->dropoffs.size() < 2 && !dropoff && game->players[ship->owner]->halite > constants::DROPOFF_COST + 1000 && game_map->calculate_distance(nearDropOff, ship->position) > 10) {
+			if (player->dropoffs.size() < 2 && !dropoff && game->players[ship->owner]->halite > constants::DROPOFF_COST && game_map->calculate_distance(nearDropOff, ship->position) > 15) {
 				dropoff = true;
 				return ship->make_dropoff();
-			
 			}
 			*/
-			Direction d = game_map->naive_navigate(ship, *nearDropOff);
+
+			Direction d = game_map->naive_navigate(ship, nearDropOff);
 			if (d == Direction::STILL) return _search_halite();
 			return ship->move(d);
 			
@@ -121,7 +127,6 @@ namespace shipBTree{
 		Command _search_halite() {
 			
 			int maxHalite = 0;
-			
 			Direction dirMaxHalite = Direction::STILL;
 			for (int x = -1; x <= 1; ++x) {
 				for (int y = -(1 - abs(x)); y <= (1 - abs(x)); ++y) {
@@ -133,7 +138,7 @@ namespace shipBTree{
 					}
 				}
 			}
-			if (maxHalite > game_map->at(ship)->halite || game_map->at(ship)->has_structure()) {
+			if (maxHalite > game_map->at(ship)->halite  || game_map->at(ship)->has_structure()) {
 				return ship->move(dirMaxHalite);
 			}
 			return ship->stay_still();
