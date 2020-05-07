@@ -11,4 +11,5 @@ replay*
 errorlog*
 bot-*
 .vs/
-obj/
+obj/*
+MyBot.exe

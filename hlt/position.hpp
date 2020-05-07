@@ -70,6 +70,13 @@ namespace hlt {
         in >> position.x >> position.y;
         return in;
     }
+	static Position operator+(const Position& position, const Direction& direction) {
+		Position out = Position(position.x, position.y);
+		out.x += (direction == Direction::WEST) ? -1 : ((direction == Direction::EAST) ? 1 : 0);
+		out.y += (direction == Direction::NORTH) ? -1 : ((direction == Direction::SOUTH) ? 1 : 0);
+
+		return out;
+	}
 }
 
 namespace std {
