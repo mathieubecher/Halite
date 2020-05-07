@@ -22,7 +22,7 @@ namespace shipBTree{
 			vector<MapCell*> retCellsInRange = vector<MapCell*>();
 			for (int x = -range; x <= range; ++x) {
 				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
-					if (x == 0 || y == 0) break;
+					if (x == 0 && y == 0) break;
 					Position ret;
 					ret.x = p.x + x;
 					ret.y = p.y + y;
@@ -37,7 +37,7 @@ namespace shipBTree{
 
 			for (int x = -range; x <= range; ++x) {
 				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
-					if (x == 0 || y == 0) break;
+					if (x == 0 && y == 0) break;
 					Position ret;
 					ret.x = p.x + x;
 					ret.y = p.y + y;
@@ -54,14 +54,14 @@ namespace shipBTree{
 
 			for (int x = -range; x <= range; ++x) {
 				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
-					if (x == 0 || y == 0) break;
+					if (x == 0 && y == 0) break;
 					Position ret;
 					ret.x = p.x + x;
 					ret.y = p.y + y;
 					if (game_map->at(ret)->is_occupied()) {
 						shared_ptr<Ship> neighbour = game_map->at(ret)->ship;
-						if(ship->id != id)
-							retShipsInRange.push_back(game_map->at(ret)->ship);
+						if(neighbour->owner != id)
+							retShipsInRange.push_back(neighbour);
 					}
 				}
 			}
@@ -79,12 +79,11 @@ namespace shipBTree{
 
 			unique_ptr<GameMap>& game_map = game->game_map;
 
-			vector<shared_ptr<Ship>> enemyInRange = vector<shared_ptr<Ship>>();
-			enemyInRange = enemyShipsInRange(ship->position, 5, ship->owner, game_map);
+			vector<shared_ptr<Ship>> enemyInRange = enemyShipsInRange(ship->position, 4, ship->owner, game_map);
+			log::log("test neighbour " + enemyInRange.size());
 
-			if (enemyInRange.size() != 0) {
-				log::log("find foes");
-				return _recolt();
+			if (enemyInRange.size() > 0) {
+				return _escape();
 			}
 			else if (ship->halite > 800) {
 				return _return_dropoff();
