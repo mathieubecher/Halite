@@ -11,3 +11,4 @@ replay*
 errorlog*
 bot-*
 .vs/
+obj/
