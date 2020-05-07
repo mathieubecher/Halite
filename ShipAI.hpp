@@ -71,5 +71,29 @@ namespace shipBTree{
 			return ship->stay_still();
 		}
 
+		Command _pursue(shared_ptr<Ship> victim) {
+			Direction d = game_map->naive_navigate(ship, victim->position);
+			if (!isNextPos(ship->position + d)) {
+				nextPos.push_back(ship->position + d);
+				return ship->move(d);
+			}
+			return ship->stay_still();
+		}
+
+		Command _escape(vector<shared_ptr<Ship>> ships) {
+			Position direction(0, 0);
+			for (int i = 0; i < ships.size(); ++i) {
+				direction += ships[0]->position - ship->position;
+			}
+			direction = game_map->normalize(direction);
+			direction.x = -direction.x; direction.y = -direction.y;
+
+			Direction d = game_map->naive_navigate(ship, direction);
+			if (!isNextPos(ship->position + d)) {
+				nextPos.push_back(ship->position + d);
+				return ship->move(d);
+			}
+			return ship->stay_still();
+		}
 	};
 }

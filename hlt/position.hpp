@@ -15,7 +15,22 @@ namespace hlt {
 
         bool operator==(const Position& other) const { return x == other.x && y == other.y; }
         bool operator!=(const Position& other) const { return x != other.x || y != other.y; }
-
+		Position operator-(const Position& other) {
+			Position p(x - other.x, y - other.y);
+			return p;
+		}
+		Position operator+(const Position& other) {
+			Position p(x + other.x, y + other.y);
+			return p;
+		}
+		Position operator+=(const Position& other) {
+			Position p(x + other.x, y + other.y);
+			return p;
+		}
+		Position operator-=(const Position& other) {
+			Position p(x - other.x, y - other.y);
+			return p;
+		}
         // strict weak ordering, useful for non-hash-based maps
         bool operator<(const Position &other) const {
             if (y != other.y) {
@@ -70,6 +85,8 @@ namespace hlt {
         in >> position.x >> position.y;
         return in;
     }
+	
+
 	static Position operator+(const Position& position, const Direction& direction) {
 		Position out = Position(position.x, position.y);
 		out.x += (direction == Direction::WEST) ? -1 : ((direction == Direction::EAST) ? 1 : 0);
