@@ -1,22 +1,17 @@
 #include "hlt/game.hpp"
 #include "hlt/constants.hpp"
 #include "hlt/log.hpp"
+#include "ShipAI.hpp"
 
 #include <random>
 #include <ctime>
 
 using namespace std;
 using namespace hlt;
-
+using namespace shipBTree;
 mt19937 rng;
 
-static Position operator+(const Position& position, const Direction& direction) {
-	Position out = Position(position.x, position.y);
-	out.x += (direction == Direction::WEST) ? -1 :( (direction == Direction::EAST) ? 1 : 0);
-	out.y += (direction == Direction::NORTH) ? -1 :( (direction == Direction::SOUTH) ? 1 : 0);
-	
-	return out;
-}
+
 vector<Position> nextPos;
 bool isNextPos(Position p) {
 	for (int i = 0; i < nextPos.size(); ++i) {
@@ -75,11 +70,10 @@ Command updateShip(shared_ptr<Ship> ship, Game * game) {
 			nextPos.push_back(ship->position + d);
 			return ship->move(d);
 		}
-		
 	}
 	else if (game_map->at(ship)->halite < constants::MAX_HALITE / 10) {
 
-		// Choix de la case vide la plus chargé en Halite
+		// Choix de la case vide la plus chargï¿½ en Halite
 		int idMaxHalite = 0;
 		int maxHalite = 0;
 		for (int i = 0; i < 4; ++i) {
@@ -112,6 +106,8 @@ int main(int argc, char* argv[]) {
     rng = mt19937(rng_seed);
 
     Game game;
+	ShipAI shipAI(&game);
+
     // At this point "game" variable is populated with initial map data.
     // This is a good place to do computationally expensive start-up pre-processing.
     // As soon as you call "ready" function below, the 2 second per turn timer will start.
@@ -126,9 +122,12 @@ int main(int argc, char* argv[]) {
 
         vector<Command> command_queue;
 		nextPos = vector<Position>();
+		shipAI.clearNextPos();
+
         for (const auto& ship_iterator : me->ships) {
             shared_ptr<Ship> ship = ship_iterator.second;
 			command_queue.push_back(updateShip(ship,&game));
+			command_queue.push_back(shipAI.update(ship));
            
         }
 
