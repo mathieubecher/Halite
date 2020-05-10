@@ -23,14 +23,10 @@ int main(int argc, char* argv[]) {
     Game game;
 	ShipAI shipAI(&game);
 	
-
-    // At this point "game" variable is populated with initial map data.
-    // This is a good place to do computationally expensive start-up pre-processing.
-    // As soon as you call "ready" function below, the 2 second per turn timer will start.
     game.ready("MathieuAlois");
 
     log::log("Successfully created bot! My Player ID is " + to_string(game.my_id) + ". Bot rng seed is " + to_string(rng_seed) + ".");
-	bool test = true;
+
     for (;;) {
         game.update_frame();
 
@@ -39,17 +35,18 @@ int main(int argc, char* argv[]) {
 		shipAI.dropoff = false;
         vector<Command> command_queue;
 
-
+		//pour tout les ships, ont va leurs appeler leur Update qui determinera pour chacun d'entre eux l'action suivante.
         for (const auto& ship_iterator : me->ships) {
             shared_ptr<Ship> ship = ship_iterator.second;
 			command_queue.push_back(shipAI.update(ship));
            
         }
-
+		//On construit une tortue si on a la quantitée d'halite nécessaire et que le shipyard n'est pas occupé.
         if (
             game.turn_number <= 200 &&
-            me->halite >= constants::SHIP_COST &&
-            !game_map->at(me->shipyard)->is_occupied())
+            me->halite >= constants::SHIP_COST && //coûts
+            !game_map->at(me->shipyard)->is_occupied() && //occupation
+			!shipAI.dropoff) //si on crée un dropoff ce tour-ci, on ne construit pas de vaisseau
         {
             command_queue.push_back(me->shipyard->spawn());
         }
