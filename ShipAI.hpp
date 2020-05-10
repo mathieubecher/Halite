@@ -164,11 +164,6 @@ namespace shipBTree{
 			vector<shared_ptr<Ship>> enemyInRange = enemyShipsInRange(ship->position, 2, ship->owner, game_map);
 
 
-
-		    if (ship->halite > 800) {
-			}
-			else if (game_map->at(ship)->halite < constants::MAX_HALITE / 10) {			
-			}
             
            if (ship->halite >= 900) {
 				return _return_dropoff();
