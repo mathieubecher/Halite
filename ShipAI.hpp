@@ -3,69 +3,34 @@ using namespace hlt;
 #include <map>
 
 namespace shipBTree{
+	// Informations des vaisseaux
 	struct ShipInfo {
+		// Position du dropoff à rejoindre
 		Position position;
+		// Retourne a un dropoff
 		bool dropoff;
-		bool create;
-		ShipInfo() : dropoff(false), create(false), position() {  }
+		ShipInfo() : dropoff(false), position() {  }
 	};
-	struct DropOffInfo {
-		Position position;
-		shared_ptr<Ship> creator;
-		bool create;
-		int dist(Position ship, unique_ptr<GameMap>& map) {
-			if (create) return map->calculate_distance(ship, position);
-			else return  map->calculate_distance(ship, position) + map->calculate_distance(creator->position, position);
-		}
-	};
+
+;	// Comportement des vaisseaux
 	struct ShipAI {
-
+		// Liste des vaisseaux
 		map<int, ShipInfo> ships_infos;
+		// Jeu en cours
 		Game * game;
-
-		shared_ptr<Ship> ship;
-
 		unique_ptr<GameMap>& game_map;
 
+		// Vaisseau en cours de traitement
+		shared_ptr<Ship> ship;
+		// Liste des dropoffs/shipyard
 		vector<Position> dropoffs;
 		bool dropoff;
 
 
-
+		// Constructeur
 		ShipAI(Game * _game) : game_map(_game->game_map),game(_game),dropoffs(){}
 
-
-		vector<MapCell*> cellsInRange(Position p, int range, unique_ptr<GameMap>& game_map) {
-			vector<MapCell*> retCellsInRange = vector<MapCell*>();
-			for (int x = -range; x <= range; ++x) {
-				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
-					if (x == 0 && y == 0) break;
-					Position ret;
-					ret.x = p.x + x;
-					ret.y = p.y + y;
-					retCellsInRange.push_back(game_map->at(ret));
-				}
-			}
-			return retCellsInRange;
-		}
-
-		vector<shared_ptr<Ship>> shipsInRange(Position p, int range, unique_ptr<GameMap>& game_map) {
-			vector<shared_ptr<Ship>> retShipsInRange = vector<shared_ptr<Ship>>();
-
-			for (int x = -range; x <= range; ++x) {
-				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
-					if (x == 0 && y == 0) break;
-					Position ret;
-					ret.x = p.x + x;
-					ret.y = p.y + y;
-					if (game_map->at(ret)->is_occupied())
-						retShipsInRange.push_back(game_map->at(ret)->ship);
-				}
-			}
-
-			return retShipsInRange;
-		}
-
+		// Retourne le nombre de vaisseaux ennemies dans un rayon donné
 		vector<shared_ptr<Ship>> enemyShipsInRange(Position p, int range, PlayerId id, unique_ptr<GameMap>& game_map) {
 			vector<shared_ptr<Ship>> retShipsInRange = vector<shared_ptr<Ship>>();
 
@@ -85,6 +50,8 @@ namespace shipBTree{
 
 			return retShipsInRange;
 		}
+
+		// Retourne le nombre de DropOff ennemies dans un rayon donné
 		vector<Position> enemyDropoffInRange(Position p, int range, PlayerId id, unique_ptr<GameMap>& game_map) {
 			vector<Position> retDropOffInRange = vector<Position>();
 
@@ -105,70 +72,16 @@ namespace shipBTree{
 			return retDropOffInRange;
 		}
 
-
-		//pursue the closest target
-
-		shared_ptr<Ship> shouldPursue(shared_ptr<Ship> _ship, vector<shared_ptr<Ship>> enemyInRange, unique_ptr<GameMap>& game_map) { 
-
-			if (enemyInRange.empty()) return nullptr;
-			shared_ptr<Ship> target = enemyInRange[0];
-
-			bool hunt = false;
-
-			int treshold = _ship->halite + _ship->halite / 2;
-
-			for (int i = 0; i < enemyInRange.size(); ++i) {
-
-				if (enemyInRange[i]->halite <= treshold && game_map->calculate_distance(ship->position, enemyInRange[i]->position) <= game_map->calculate_distance(ship->position, target->position)) {
-
-					target = enemyInRange[i];
-
-					hunt = true;
-
-				}
-
-			}
-
-			if (hunt) return target;
-
-			return nullptr;
-
-
-
-		}
-
-
-
-		bool shouldFlee(shared_ptr<Ship> _ship, vector<shared_ptr<Ship>> enemyInRange, unique_ptr<GameMap>& game_map) {
-
-			for (int i = 0; i < enemyInRange.size(); ++i) {
-
-				if (enemyInRange[i]->halite <= _ship->halite) {
-
-				    return true;
-
-				}
-
-			}
-
-			return false;
-
-		}
-
-
-
+		// Comportement des vaisseaux
 		Command update(shared_ptr<Ship> _ship) {
 
 			ship = _ship;
 
-			log::log("return dropoff " + to_string(ship->id) + " : " + to_string(ships_infos[ship->id].dropoff));
 			unique_ptr<GameMap>& game_map = game->game_map;
 			
-			vector<shared_ptr<Ship>> enemyInRange = enemyShipsInRange(ship->position, 2, ship->owner, game_map);
-
-			
-            
-           if (ship->halite >= 800 || ((ships_infos[ship->id].dropoff && ship->halite >= 500) || (game->turn_number > 380 && ship->halite >= 100))) {
+			// Si le vaisseau à suffisement de ressources	
+            if (ship->halite >= 800 * game->turn_number/constants::MAX_TURNS ||
+				(ships_infos[ship->id].dropoff && ship->halite >= 500 * game->turn_number / constants::MAX_TURNS)) {
 				return _return_dropoff();
 			}
 			else {
