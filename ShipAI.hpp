@@ -8,7 +8,6 @@ namespace shipBTree{
 	struct ShipAI {
 
 
-
 		Game * game;
 
 		shared_ptr<Ship> ship;
@@ -160,14 +159,15 @@ namespace shipBTree{
 		Command update(shared_ptr<Ship> _ship) {
 
 			ship = _ship;
-			
+
+			log::log("return dropoff " + to_string(ship->id) + " : " + to_string(ship->infos.dropoff));
 			unique_ptr<GameMap>& game_map = game->game_map;
 			
 			vector<shared_ptr<Ship>> enemyInRange = enemyShipsInRange(ship->position, 2, ship->owner, game_map);
 
 			
             
-           if (ship->halite >= 800) {
+           if (ship->halite >= 800 || (ship->infos.dropoff && ship->halite >= 500)) {
 				return _return_dropoff();
 			}/*
 			else if (shouldFlee(ship, enemyInRange, game_map)) {
@@ -177,6 +177,7 @@ namespace shipBTree{
 				return _pursue(shouldPursue(ship, enemyInRange,game_map));
             }*/
 			else {
+			   ship->infos.dropoff = false;
 				return _search_halite();
 			}
 
@@ -204,7 +205,6 @@ namespace shipBTree{
 				
 			}
 
-			log::log("dropOff " + to_string(nearDropOff.x) + " " + to_string(nearDropOff.y));
 			return nearDropOff;
 
 		}
@@ -212,20 +212,16 @@ namespace shipBTree{
 
 
 		Command _return_dropoff() {
-			log::log("return DropOff");
+			ship->infos.dropoff = true;
 			Position nearDropOff = NearDropOff();
 
 			shared_ptr<Player> player = game->players[ship->owner];
 
-			
-
-			
 
 			if (player->dropoffs.size() < 2 && !dropoff && game->players[ship->owner]->halite > constants::DROPOFF_COST && game_map->calculate_distance(nearDropOff, ship->position) > 15) {
 
 				dropoff = true;
 
-				log::log("Create DropOff");
 				dropoffs.push_back(ship->position);
 				return ship->make_dropoff();
 			}
@@ -233,7 +229,7 @@ namespace shipBTree{
 			
 
 			Direction d = game_map->naive_navigate(ship, nearDropOff);
-			if (d == Direction::STILL) return _search_halite();
+			//if (d == Direction::STILL) return _search_halite();
 			return ship->move(d);
 			
 
@@ -327,7 +323,6 @@ namespace shipBTree{
 			return ship->stay_still();
 
 		}
-
 
 
 

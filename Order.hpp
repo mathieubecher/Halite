@@ -5,7 +5,6 @@ using namespace hlt;
 
 namespace shipBTree {
 	
-
 	enum OrderType {
 		DROPOFF, AGGRO
 	};
