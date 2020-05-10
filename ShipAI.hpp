@@ -15,11 +15,12 @@ namespace shipBTree{
 
 		unique_ptr<GameMap>& game_map;
 
-		bool dropoff = false;
+		vector<Position> dropoffs;
+		bool dropoff;
 
 
 
-		ShipAI(Game * _game) : game_map(_game->game_map),game(_game){}
+		ShipAI(Game * _game) : game_map(_game->game_map),game(_game),dropoffs(){}
 
 
 		vector<MapCell*> cellsInRange(Position p, int range, unique_ptr<GameMap>& game_map) {
@@ -109,6 +110,7 @@ namespace shipBTree{
 
 		shared_ptr<Ship> shouldPursue(shared_ptr<Ship> _ship, vector<shared_ptr<Ship>> enemyInRange, unique_ptr<GameMap>& game_map) { 
 
+			if (enemyInRange.empty()) return nullptr;
 			shared_ptr<Ship> target = enemyInRange[0];
 
 			bool hunt = false;
@@ -163,17 +165,17 @@ namespace shipBTree{
 			
 			vector<shared_ptr<Ship>> enemyInRange = enemyShipsInRange(ship->position, 2, ship->owner, game_map);
 
-
+			
             
-           if (ship->halite >= 900) {
+           if (ship->halite >= 800) {
 				return _return_dropoff();
-			}
+			}/*
 			else if (shouldFlee(ship, enemyInRange, game_map)) {
 				return _escape(enemyInRange);
             }
             else if (game->players[ship->owner]->halite > 1000 && shouldPursue(ship, enemyInRange,game_map) != nullptr) {
 				return _pursue(shouldPursue(ship, enemyInRange,game_map));
-            }
+            }*/
 			else {
 				return _search_halite();
 			}
@@ -186,22 +188,23 @@ namespace shipBTree{
 
 		Position NearDropOff() {
 
+
 			Position nearDropOff = game->players[ship->owner]->shipyard->position;
 
 			shared_ptr<Player> player = game->players[ship->owner];
 
 
 
-			for (int i = 0; i < player->dropoffs.size(); ++i) {
-
-				if (game_map->calculate_distance(player->dropoffs[i]->position, ship->position) < game_map->calculate_distance(nearDropOff, ship->position)) {
-
-					nearDropOff = player->dropoffs[i]->position;
+			for (int i = 0; i < dropoffs.size(); ++i) {
+				if (game_map->calculate_distance(dropoffs[i], ship->position) < game_map->calculate_distance(nearDropOff, ship->position)) {
+					nearDropOff = dropoffs[i];
 
 				}
 
+				
 			}
 
+			log::log("dropOff " + to_string(nearDropOff.x) + " " + to_string(nearDropOff.y));
 			return nearDropOff;
 
 		}
@@ -209,22 +212,25 @@ namespace shipBTree{
 
 
 		Command _return_dropoff() {
-
+			log::log("return DropOff");
 			Position nearDropOff = NearDropOff();
 
 			shared_ptr<Player> player = game->players[ship->owner];
 
 			
 
-			/*
+			
 
 			if (player->dropoffs.size() < 2 && !dropoff && game->players[ship->owner]->halite > constants::DROPOFF_COST && game_map->calculate_distance(nearDropOff, ship->position) > 15) {
 
 				dropoff = true;
 
+				log::log("Create DropOff");
+				dropoffs.push_back(ship->position);
 				return ship->make_dropoff();
 			}
-			*/
+
+			
 
 			Direction d = game_map->naive_navigate(ship, nearDropOff);
 			if (d == Direction::STILL) return _search_halite();
@@ -247,7 +253,7 @@ namespace shipBTree{
 				for (int y = -(1 - abs(x)); y <= (1 - abs(x)); ++y) {
 					Position p = ship->position + Position(x, y);
 					Direction d = game_map->naive_navigate(ship, p);
-					if (d != Direction::STILL && game_map->at(p)->halite > maxHalite) {
+					if (d != Direction::STILL && enemyShipsInRange(p,1, ship->owner, game_map).size() == 0 && game_map->at(p)->halite > maxHalite) {
 						dirMaxHalite = d;
 						maxHalite = game_map->at(p)->halite;
 					}

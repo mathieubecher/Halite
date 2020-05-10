@@ -2,7 +2,7 @@
 #include "hlt/constants.hpp"
 #include "hlt/log.hpp"
 #include "ShipAI.hpp"
-
+#include "OrderAI.hpp"
 #include <random>
 #include <ctime>
 
@@ -10,7 +10,7 @@ using namespace std;
 using namespace hlt;
 using namespace shipBTree;
 mt19937 rng;
-
+vector<OrderAI> ordersAI;
 
 int main(int argc, char* argv[]) {
     unsigned int rng_seed;
@@ -23,6 +23,9 @@ int main(int argc, char* argv[]) {
 
     Game game;
 	ShipAI shipAI(&game);
+	ordersAI = vector<OrderAI>();
+	ordersAI.push_back(DropOffOrder(&game));
+	
 
     // At this point "game" variable is populated with initial map data.
     // This is a good place to do computationally expensive start-up pre-processing.
@@ -35,9 +38,13 @@ int main(int argc, char* argv[]) {
         game.update_frame();
         shared_ptr<Player> me = game.me;
         unique_ptr<GameMap>& game_map = game.game_map;
-
-        vector<Command> command_queue;
 		shipAI.dropoff = false;
+        vector<Command> command_queue;
+		orders = vector<Order>();
+		for (OrderAI& orderAI : ordersAI) {
+			orderAI.DefineOrder();
+		}
+
 
         for (const auto& ship_iterator : me->ships) {
             shared_ptr<Ship> ship = ship_iterator.second;
