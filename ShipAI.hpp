@@ -226,21 +226,26 @@ namespace shipBTree{
 
 		Command _search_halite() {
 
-			
+
 			int maxHalite = 0;
 
 			Direction dirMaxHalite = Direction::STILL;
+			bool forceMove = false;
 			for (int x = -1; x <= 1; ++x) {
 				for (int y = -(1 - abs(x)); y <= (1 - abs(x)); ++y) {
 					Position p = ship->position + Position(x, y);
 					Direction d = game_map->naive_navigate(ship, p);
-					if (d != Direction::STILL && enemyShipsInRange(p,1, ship->owner, game_map).size() == 0 && game_map->at(p)->halite > maxHalite) {
-						dirMaxHalite = d;
-						maxHalite = game_map->at(p)->halite;
+					if (d != Direction::STILL && game_map->at(p)->halite > maxHalite) {
+						if (enemyShipsInRange(p, 1, ship->owner, game_map).size() > 0) forceMove = true;
+						else {
+							dirMaxHalite = d;
+							maxHalite = game_map->at(p)->halite;
+						}
 					}
+					else if (d == Direction::STILL && game_map->at(p)->is_occupied() && game_map->at(p)->ship->owner != ship->owner) forceMove = true;
 				}
 			}
-			if (game_map->at(ship)->halite < constants::MAX_HALITE / 10 && (maxHalite > game_map->at(ship)->halite  || game_map->at(ship)->has_structure())) {
+			if ((maxHalite > 0 && forceMove) || game_map->at(ship)->halite < constants::MAX_HALITE / 10 && (maxHalite > game_map->at(ship)->halite || game_map->at(ship)->has_structure())) {
 				return ship->move(dirMaxHalite);
 
 			}
