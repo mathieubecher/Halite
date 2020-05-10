@@ -27,7 +27,7 @@ namespace shipBTree{
 
 		unique_ptr<GameMap>& game_map;
 
-		vector<DropOffInfo> dropoffs;
+		vector<Position> dropoffs;
 		bool dropoff;
 
 
@@ -152,13 +152,7 @@ namespace shipBTree{
             
            if (ship->halite >= 800 || ((ships_infos[ship->id].dropoff && ship->halite >= 500) || (game->turn_number > 380 && ship->halite >= 100))) {
 				return _return_dropoff();
-			}/*
-			else if (shouldFlee(ship, enemyInRange, game_map)) {
-				return _escape(enemyInRange);
-            }
-            else if (game->players[ship->owner]->halite > 1000 && shouldPursue(ship, enemyInRange,game_map) != nullptr) {
-				return _pursue(shouldPursue(ship, enemyInRange,game_map));
-            }*/
+			}
 			else {
 			   ships_infos[ship->id].dropoff = false;
 				return _search_halite();
@@ -180,8 +174,8 @@ namespace shipBTree{
 
 
 			for (int i = 0; i < dropoffs.size(); ++i) {
-				if (dropoffs[i].dist(ship->position, game->game_map) < dropoffs[i].dist(nearDropOff, game->game_map)) {
-					nearDropOff = dropoffs[i].position;
+				if (game->game_map->calculate_distance(dropoffs[i],ship->position) < game->game_map->calculate_distance(nearDropOff, ship->position)) {
+					nearDropOff = dropoffs[i];
 
 				}
 
@@ -208,7 +202,7 @@ namespace shipBTree{
 
 			shared_ptr<Player> player = game->players[ship->owner];
 
-			/*
+			
 			if (player->dropoffs.size() < 2 && !dropoff && game->players[ship->owner]->halite > constants::DROPOFF_COST && game_map->calculate_distance(ships_infos[ship->id].position, ship->position) > 15) {
 
 				dropoff = true;
@@ -216,7 +210,7 @@ namespace shipBTree{
 				dropoffs.push_back(ship->position);
 				return ship->make_dropoff();
 			}
-			*/
+			
 			
 
 			Direction d = game_map->naive_navigate(ship, ships_infos[ship->id].position);
@@ -254,9 +248,6 @@ namespace shipBTree{
 			return ship->stay_still();
 
 		}
-
-
-		
 		
 
 		Command _recolt() {
@@ -264,59 +255,6 @@ namespace shipBTree{
 			return ship->stay_still();
 
 		}
-
-		/*
-
-		Command _pursue(shared_ptr<Ship> victim) {
-
-			Direction d = game_map->naive_navigate(ship, victim->position);
-			return ship->move(d);
-
-		}
-
-
-
-		Command _escape(vector<shared_ptr<Ship>> ships) {
-
-			Position direction(0, 0);
-
-			log::log("begin escape");
-
-			string debug = "";
-
-			for (int i = 0; i < ships.size(); ++i) {
-
-				debug += "["+to_string((ships[i]->position - ship->position).x) + " " + to_string((ships[i]->position - ship->position).y)+"] ";
-
-				direction = direction + (ships[i]->position - ship->position);
-
-			}
-
-			log::log(debug);
-
-			
-
-			if (direction.x > direction.y) direction= Position(max(-1, min(1, direction.x)), 0);
-
-			else direction = Position(0, max(-1,min(1,direction.y)));
-
-
-
-			Direction d = invert_direction(game_map->naive_navigate(ship, ship->position + direction));
-
-			if (!game_map->at(ship->position + d)->is_occupied()) {
-				return ship->move(d);
-
-			}
-
-			
-
-			return ship->stay_still();
-
-		}
-
-		*/
-
 
 	};
 
