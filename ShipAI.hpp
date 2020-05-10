@@ -85,7 +85,25 @@ namespace shipBTree{
 
 			return retShipsInRange;
 		}
+		vector<Position> enemyDropoffInRange(Position p, int range, PlayerId id, unique_ptr<GameMap>& game_map) {
+			vector<Position> retDropOffInRange = vector<Position>();
 
+			for (int x = -range; x <= range; ++x) {
+				for (int y = -(range - abs(x)); y <= +(range - abs(x)); ++y) {
+					if (x == 0 && y == 0) break;
+					Position ret;
+					ret.x = p.x + x;
+					ret.y = p.y + y;
+					if (game_map->at(ret)->has_structure()) {
+						Position neighbour = game_map->at(ret)->structure->position;
+						if (game_map->at(ret)->structure->owner != id)
+							retDropOffInRange.push_back(neighbour);
+					}
+				}
+			}
+
+			return retDropOffInRange;
+		}
 
 
 		//pursue the closest target
@@ -203,8 +221,8 @@ namespace shipBTree{
 			shared_ptr<Player> player = game->players[ship->owner];
 
 			
-			if (player->dropoffs.size() < 2 && !dropoff && game->players[ship->owner]->halite > constants::DROPOFF_COST && game_map->calculate_distance(ships_infos[ship->id].position, ship->position) > 15) {
-
+			if (player->dropoffs.size() < 2 && !dropoff && game->players[ship->owner]->halite > constants::DROPOFF_COST && game_map->calculate_distance(ships_infos[ship->id].position, ship->position) > 15
+				&& (enemyDropoffInRange(ship->position, 4, player->id, game_map).size() ==  0)) {
 				dropoff = true;
 
 				dropoffs.push_back(ship->position);
@@ -242,7 +260,7 @@ namespace shipBTree{
 							maxHalite = game_map->at(p)->halite;
 						}
 					}
-					else if (d == Direction::STILL && game_map->at(p)->is_occupied() && game_map->at(p)->ship->owner != ship->owner) forceMove = true;
+					
 				}
 			}
 			if ((maxHalite > 0 && forceMove) || game_map->at(ship)->halite < constants::MAX_HALITE / 10 && (maxHalite > game_map->at(ship)->halite || game_map->at(ship)->has_structure())) {
