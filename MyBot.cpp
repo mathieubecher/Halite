@@ -2,7 +2,6 @@
 #include "hlt/constants.hpp"
 #include "hlt/log.hpp"
 #include "ShipAI.hpp"
-#include "OrderAI.hpp"
 #include <random>
 #include <ctime>
 
@@ -10,7 +9,60 @@ using namespace std;
 using namespace hlt;
 using namespace shipBTree;
 mt19937 rng;
-vector<OrderAI> ordersAI;
+
+Position BestDropOff(Game * game) {
+	const int width = game->game_map->width;
+	const int height = game->game_map->height;
+	int radius = 7;
+
+	vector<Position> dropoffs;
+	dropoffs = vector<Position>();
+	for (const auto& player : game->players) {
+		dropoffs.push_back(player->shipyard->position);
+		for (const auto& dropoff : player->dropoffs) {
+			dropoffs.push_back(dropoff.second->position);
+		}
+	}
+	
+	vector<vector<int>> cases;
+	cases = vector<vector<int>>();
+
+	for (int x = 0; x < width; ++x) {
+		cases.push_back(vector<int>());
+		for (int y = 0; y < height; ++y) {
+			bool near = false;
+			Position actual = Position(x, y);
+			for (const auto& dropoff : dropoffs) near |= game->game_map->calculate_distance(actual, dropoff) < radius;
+
+			cases[x].push_back((near) ? 0 : game->game_map->at(actual)->halite);
+		}
+	}
+	
+	Position best = Position(0, 0);
+	
+	int bestValue = 0;
+
+	for (int x = 0; x < width; ++x) {
+		for (int y = 0; y < height; ++y) {
+			if (cases[x][y] > 0) {
+				int value = 0;
+				for (int X = -radius; X <= radius; ++X) {
+					for (int Y = -(radius - abs(X)); Y <= (radius - abs(X)); ++Y) {
+						value += cases[(x + X + width) % width][(y + Y + height) % height];
+					}
+				}
+
+				if (value > bestValue) {
+					best = Position(x, y);
+					bestValue = value;
+				}
+			}
+		}
+	}
+	log::log(to_string(bestValue));
+	return best;
+}
+
 
 int main(int argc, char* argv[]) {
     unsigned int rng_seed;
@@ -23,8 +75,6 @@ int main(int argc, char* argv[]) {
 
     Game game;
 	ShipAI shipAI(&game);
-	ordersAI = vector<OrderAI>();
-	ordersAI.push_back(DropOffOrder(&game));
 	
 
     // At this point "game" variable is populated with initial map data.
@@ -33,17 +83,14 @@ int main(int argc, char* argv[]) {
     game.ready("MathieuAlois");
 
     log::log("Successfully created bot! My Player ID is " + to_string(game.my_id) + ". Bot rng seed is " + to_string(rng_seed) + ".");
-
+	bool test = true;
     for (;;) {
         game.update_frame();
+
         shared_ptr<Player> me = game.me;
         unique_ptr<GameMap>& game_map = game.game_map;
 		shipAI.dropoff = false;
         vector<Command> command_queue;
-		orders = vector<Order>();
-		for (OrderAI& orderAI : ordersAI) {
-			orderAI.DefineOrder();
-		}
 
 
         for (const auto& ship_iterator : me->ships) {
@@ -67,4 +114,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-

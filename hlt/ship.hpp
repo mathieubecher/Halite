@@ -2,27 +2,19 @@
 #include "entity.hpp"
 #include "constants.hpp"
 #include "command.hpp"
+
 #include <memory>
 #include <random>
-#
-namespace hlt {
-	struct ShipInfo {
-		bool order;
-		Position toGo;
-		bool dropoff;
-		ShipInfo() :order(false), dropoff(false) {  }
-	};
 
+namespace hlt {
     struct Ship : Entity {
         Halite halite; 
-		ShipInfo infos;
+
 
         Ship(PlayerId player_id, EntityId ship_id, int x, int y, Halite halite) :
             Entity(player_id, ship_id, x, y),
-            halite(halite), infos()
-        {
-			log::log("PUTAIIIIIIIIIIIIIIIIN");
-		}
+            halite(halite)
+        {}
 
         bool is_full() const {
             return halite >= constants::MAX_HALITE;
@@ -40,6 +32,8 @@ namespace hlt {
             return hlt::command::move(id, Direction::STILL);
         }
 
+		
+		
         static std::shared_ptr<Ship> _generate(PlayerId player_id);
     };
 }
